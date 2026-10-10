@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+.git/
+.gitignore
+.vs/
+.vscode/
+.idea/
+Dockerfile
+.dockerignore
+**/appsettings.Development.json
+**/Properties/launchSettings.json
