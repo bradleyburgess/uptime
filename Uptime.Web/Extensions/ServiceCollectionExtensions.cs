@@ -6,10 +6,17 @@ namespace Uptime.Web.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddServices(this IServiceCollection services)
+    public static IServiceCollection AddServices(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
         services.AddSingleton<UrlResolver>();
         services.AddSingleton<Migrator>();
+        services.AddSingleton<VersionProvider>();
+        services.AddSingleton(sp =>
+            PingServiceFactory.Create(sp.GetRequiredService<UrlResolver>())
+        );
         return services;
     }
 

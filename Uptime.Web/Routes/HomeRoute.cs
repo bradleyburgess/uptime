@@ -11,7 +11,8 @@ public class HomeRoute
     public static async Task<IResult> HandleAsync(
         PingResultsRepository pingResultRepo,
         OutagesRepository outagesRepo,
-        UrlResolver urlResolver
+        UrlResolver urlResolver,
+        VersionProvider versionProvider
     )
     {
         var model = new HomeTemplateModel(
@@ -19,7 +20,8 @@ public class HomeRoute
             UrlToPing: urlResolver.Url,
             Outages: await outagesRepo.GetRecentListAsync(),
             MostRecentPing: await pingResultRepo.GetMostRecentAsync(),
-            MostRecentSuccessfulPing: await pingResultRepo.GetMostRecentSuccessAsync()
+            MostRecentSuccessfulPing: await pingResultRepo.GetMostRecentSuccessAsync(),
+            Version: versionProvider.Version
         );
         var html = new HomeTemplateBuilder(model).Build();
         return Results.Content(html, "text/html");

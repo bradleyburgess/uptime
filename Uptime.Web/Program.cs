@@ -8,7 +8,7 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder
     .Services.AddRespositories()
-    .AddServices()
+    .AddServices(builder.Configuration)
     .AddBackgroundServices()
     .AddMigrations()
     .ConfigureOptions(builder.Configuration);

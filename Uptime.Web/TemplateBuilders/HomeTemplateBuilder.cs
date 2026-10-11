@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 using Uptime.Web.Data.Models;
 
 namespace Uptime.Web.TemplateBuilders;
@@ -14,7 +10,8 @@ public record HomeTemplateModel(
     string UrlToPing,
     IReadOnlyList<Outage> Outages,
     PingResult? MostRecentPing,
-    PingResult? MostRecentSuccessfulPing
+    PingResult? MostRecentSuccessfulPing,
+    string Version
 );
 
 public class HomeTemplateBuilder(HomeTemplateModel model) : ITemplateBuilder
@@ -27,13 +24,14 @@ public class HomeTemplateBuilder(HomeTemplateModel model) : ITemplateBuilder
         sb.Append("<head>");
         sb.Append("<meta charset=\"UTF-8\">");
         sb.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
-        sb.Append("<title>Uptime</title>");
+        sb.Append($"<title>Uptime</title>");
         sb.Append(
             "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.min.css\">"
         );
         sb.Append(
             "<style>.status{display:inline-block;padding:.25rem .75rem;border-radius:999px;color:#fff;font-weight:600}.status.online{background:#2e7d32}.status.offline{background:#c62828}.status.unknown{background:#757575}.status-row{display:flex;flex-wrap:wrap;align-items:center;gap:1rem 1rem}.status-details p{margin:0}main>section{margin-bottom:3rem}@media(max-width:575px){.status-row{row-gap:1.25rem}}</style>"
         );
+        sb.Append("<style>html{height:100%;}body{min-height:100%;display:flex;flex-direction:column;}main{flex:1;}footer{text-align:center;}</style>");
         sb.Append("</head>");
         sb.Append("<body>");
         sb.Append("<main class=\"container\">");
@@ -41,6 +39,7 @@ public class HomeTemplateBuilder(HomeTemplateModel model) : ITemplateBuilder
         sb.Append(BuildCurrentStatusSection());
         sb.Append(BuildOutagesSection());
         sb.Append("</main>");
+        sb.Append(BuildFooter());
         sb.Append("</body>");
         sb.Append("</html>");
         return sb.ToString();
@@ -51,6 +50,7 @@ public class HomeTemplateBuilder(HomeTemplateModel model) : ITemplateBuilder
         var sb = new StringBuilder();
         sb.Append("<header>");
         sb.Append("<h1>Uptime</h1>");
+        sb.Append($"<p>Version: {WebUtility.HtmlEncode(model.Version)}</p>");
         sb.Append($"<p>Monitoring: <code>{WebUtility.HtmlEncode(model.UrlToPing)}</code></p>");
         sb.Append("</header>");
         return sb.ToString();
@@ -122,6 +122,11 @@ public class HomeTemplateBuilder(HomeTemplateModel model) : ITemplateBuilder
         }
         sb.Append("</section>");
         return sb.ToString();
+    }
+
+    private string BuildFooter()
+    {
+        return $"<footer><p>v. {WebUtility.HtmlEncode(model.Version)} <br/>Copyright © {DateTimeOffset.UtcNow.Year} Bradley Burgess.</p></footer>";
     }
 
     private static string FormatDate(DateTimeOffset? date)
