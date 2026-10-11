@@ -1,4 +1,5 @@
 using System.Net.NetworkInformation;
+using Uptime.Web.Data.Models;
 using Uptime.Web.Data.Repositories;
 using Uptime.Web.Services;
 
@@ -11,26 +12,32 @@ public class PingHostedService(
     IConfiguration configuration
 ) : BackgroundService
 {
+    private readonly int PollInterval = configuration.GetValue<int>("PollInterval", 30);
+    private readonly int DowntimeThreshold = configuration.GetValue<int>("DowntimeThreshold", 60);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var urlToPing = urlResolver.Url;
-        var pollInterval = TimeSpan.FromSeconds(configuration.GetValue<int>("PollInterval"));
         while (!stoppingToken.IsCancellationRequested)
         {
             var result = urlResolver.IsIpOrHostname()
                 ? await PerformPing(urlToPing)
                 : await PerformHttpGet(urlToPing);
             await (result ? HandleSuccess() : HandleFailure());
-            await Task.Delay(pollInterval, stoppingToken);
+            await Task.Delay(PollInterval, stoppingToken);
         }
     }
 
     private async Task HandleFailure()
     {
         var mostRecentOutage = await outagesRepo.GetMostRecentAsync();
-        if (mostRecentOutage == null || mostRecentOutage.EndTime != null)
+        var mostRecentRecordedPing = await pingResultsRepo.GetMostRecentAsync();
+        if (IsNotOngoingOutage(mostRecentOutage))
         {
-            await outagesRepo.AddAsync();
+            var startTime = IsDowntimeExceeded(mostRecentRecordedPing!.LastDateUtc)
+                ? mostRecentRecordedPing!.LastDateUtc
+                : DateTimeOffset.UtcNow;
+            await outagesRepo.AddAsync(startTime);
         }
         await pingResultsRepo.UpdateMostRecentAsync(false);
     }
@@ -38,12 +45,23 @@ public class PingHostedService(
     private async Task HandleSuccess()
     {
         var mostRecentOutage = await outagesRepo.GetMostRecentAsync();
-        if (mostRecentOutage != null && mostRecentOutage.EndTime == null)
+        var mostRecentRecordedPing = await pingResultsRepo.GetMostRecentAsync();
+        if (IsOngoingOutage(mostRecentOutage))
         {
-            await outagesRepo.SetEndTimeAsync(mostRecentOutage.Id);
+            await outagesRepo.SetEndTimeAsync(mostRecentOutage!.Id);
+        }
+        else if (IsDowntimeExceeded(mostRecentRecordedPing!.LastDateUtc))
+        {
+            await outagesRepo.AddAsync(mostRecentRecordedPing.LastDateUtc, DateTimeOffset.UtcNow);
         }
         await pingResultsRepo.UpdateMostRecentAsync(true);
         await pingResultsRepo.UpdateMostRecentSuccessAsync();
+    }
+
+    private bool IsDowntimeExceeded(DateTimeOffset? lastDateUtc)
+    {
+        return lastDateUtc.HasValue
+            && lastDateUtc.Value < DateTime.UtcNow.AddSeconds(-DowntimeThreshold);
     }
 
     private static async Task<bool> PerformPing(string ipOrHost)
@@ -73,4 +91,9 @@ public class PingHostedService(
             return false;
         }
     }
+
+    private static bool IsOngoingOutage(Outage? outage) => outage != null && outage.EndTime == null;
+
+    private static bool IsNotOngoingOutage(Outage? outage) =>
+        outage == null || outage.EndTime != null;
 }

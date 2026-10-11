@@ -13,12 +13,13 @@ public class OutagesRepository(IConfiguration configuration) : BaseRepository(co
         return await connection.ExecuteScalarAsync<int>(sql);
     }
 
-    public async Task AddAsync()
+    public async Task AddAsync(DateTimeOffset? startTime = null, DateTimeOffset? endTime = null)
     {
+        var outageStartTime = startTime ?? DateTimeOffset.UtcNow;
         using var connection = CreateConnection();
         await connection.OpenAsync();
-        var sql = "INSERT INTO Outages (StartTime) VALUES (@StartTime);";
-        await connection.ExecuteAsync(sql, new { StartTime = DateTimeOffset.UtcNow });
+        var sql = "INSERT INTO Outages (StartTime, EndTime) VALUES (@StartTime, @EndTime);";
+        await connection.ExecuteAsync(sql, new { StartTime = outageStartTime, EndTime = endTime });
     }
 
     public async Task SetEndTimeAsync(int id)
