@@ -1,11 +1,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0-resolute-aot AS build
 WORKDIR /src
 
+RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin
+
 COPY Uptime.Web/Uptime.Web.csproj Uptime.Web/
 RUN dotnet restore Uptime.Web/Uptime.Web.csproj
 
 COPY Uptime.Web/ Uptime.Web/
 RUN dotnet publish Uptime.Web/Uptime.Web.csproj -c Release -o /app --no-restore
+
+# Grant the Uptime.Web binary the capability to use raw network sockets (required for ICMP ping)
+RUN setcap cap_net_raw+ep /app/Uptime.Web
 
 # Writable data dir for the non-root user (no shell in the chiseled image)
 RUN mkdir /data
