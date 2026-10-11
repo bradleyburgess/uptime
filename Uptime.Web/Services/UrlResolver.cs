@@ -2,7 +2,7 @@ namespace Uptime.Web.Services;
 
 public class UrlResolver
 {
-    private const string DefaultUrl = "https://cp.cloudflare.com/generate_204";
+    private const string DefaultUrl = "https://1.1.1.1";
     public readonly string Url;
 
     public UrlResolver(IConfiguration configuration)
