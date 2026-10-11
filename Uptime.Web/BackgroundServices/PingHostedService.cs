@@ -14,6 +14,7 @@ public class PingHostedService(
 {
     private readonly int PollInterval = configuration.GetValue<int>("PollInterval", 30);
     private readonly int DowntimeThreshold = configuration.GetValue<int>("DowntimeThreshold", 60);
+    private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(5) };
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -24,7 +25,7 @@ public class PingHostedService(
                 ? await PerformPing(urlToPing)
                 : await PerformHttpGet(urlToPing);
             await (result ? HandleSuccess() : HandleFailure());
-            await Task.Delay(PollInterval, stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(PollInterval), stoppingToken);
         }
     }
 
@@ -61,7 +62,7 @@ public class PingHostedService(
     private bool IsDowntimeExceeded(DateTimeOffset? lastDateUtc)
     {
         return lastDateUtc.HasValue
-            && lastDateUtc.Value < DateTime.UtcNow.AddSeconds(-DowntimeThreshold);
+            && lastDateUtc.Value < DateTimeOffset.UtcNow.AddSeconds(-DowntimeThreshold);
     }
 
     private static async Task<bool> PerformPing(string ipOrHost)
@@ -82,8 +83,7 @@ public class PingHostedService(
     {
         try
         {
-            using var httpClient = new HttpClient();
-            var response = await httpClient.GetAsync(url);
+            var response = await HttpClient.GetAsync(url);
             return response.IsSuccessStatusCode;
         }
         catch
