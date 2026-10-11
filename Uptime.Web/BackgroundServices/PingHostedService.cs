@@ -81,9 +81,13 @@ public class PingHostedService(
 
     private static async Task<bool> PerformHttpGet(string url)
     {
+        var request = new HttpRequestMessage(HttpMethod.Head, url);
         try
         {
-            var response = await HttpClient.GetAsync(url);
+            var response = await HttpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead
+            );
             return response.IsSuccessStatusCode;
         }
         catch
