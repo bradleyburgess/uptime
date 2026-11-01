@@ -35,7 +35,7 @@ The container runs as a non-root user. If you monitor an IP or hostname (ICMP) a
 ## Develop
 
 ```sh
-dotnet run --project Uptime.Web
+dotnet run --project dotnet/Uptime.Web
 ```
 
 In `Development` the database is `app.db` in the working directory.
@@ -43,7 +43,7 @@ In `Development` the database is `app.db` in the working directory.
 Build the image locally:
 
 ```sh
-docker build -t uptime .
+docker build -t uptime dotnet
 ```
 
 ## Releasing
