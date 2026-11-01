@@ -50,7 +50,6 @@ public class HomeTemplateBuilder(HomeTemplateModel model) : ITemplateBuilder
         var sb = new StringBuilder();
         sb.Append("<header>");
         sb.Append("<h1>Uptime</h1>");
-        sb.Append($"<p>Version: {WebUtility.HtmlEncode(model.Version)}</p>");
         sb.Append($"<p>Monitoring: <code>{WebUtility.HtmlEncode(model.UrlToPing)}</code></p>");
         sb.Append("</header>");
         return sb.ToString();
