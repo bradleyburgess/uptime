@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3
+
+- Fix system status calculation when there are no outages
+
 ## 0.5.2
 
 - Fix build flags for arch

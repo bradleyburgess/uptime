@@ -36,7 +36,7 @@ public class Resources {
         List<Outage> outages = Outage.getMostRecent();
         List<PingResult> pingResults = PingResult.listAll();
 
-        var systemStatus = outages.getFirst().endDate == null
+        var systemStatus = !outages.isEmpty() && outages.getFirst().endDate == null
                 ? SystemStatus.OFFLINE
                 : SystemStatus.ONLINE;
 
@@ -45,7 +45,10 @@ public class Resources {
                 .findFirst()
                 .orElse(null);
 
-        var currentStatusDto = new CurrentStatusDto(systemStatus, lastSuccessfulPing.lastDate, pingConfig.host());
+        var currentStatusDto = new CurrentStatusDto(
+                systemStatus,
+                lastSuccessfulPing == null ? null : lastSuccessfulPing.lastDate,
+                pingConfig.host());
         return new UptimeDto(outages, currentStatusDto);
     }
 }
