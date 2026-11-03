@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2
+
+- Fix build flags for arch
+
 ## 0.5.0
 
 - Change to Java (Quarkus) with Vue

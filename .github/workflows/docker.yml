@@ -52,7 +52,8 @@ jobs:
       - name: Package Quarkus native executable
         working-directory: java
         # Container build keeps the binary's glibc compatible with the UBI 9 runtime image
-        run: ./mvnw -B package -Dnative -Dquarkus.native.container-build=true -DskipTests
+        # -march=compatibility avoids requiring newer CPU features (e.g. LSE, missing on Pi 4 and earlier)
+        run: ./mvnw -B package -Dnative -Dquarkus.native.container-build=true -Dquarkus.native.additional-build-args=-march=compatibility -DskipTests
 
       - id: build
         uses: docker/build-push-action@v6
