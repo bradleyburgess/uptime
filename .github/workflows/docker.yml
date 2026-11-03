@@ -33,10 +33,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # .NET build (disabled)
+      # - id: build
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: dotnet
+      #     platforms: ${{ matrix.platform }}
+      #     outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+      #     cache-from: type=gha,scope=${{ matrix.platform }}
+      #     cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Package Quarkus native executable
+        working-directory: java
+        # Container build keeps the binary's glibc compatible with the UBI 9 runtime image
+        run: ./mvnw -B package -Dnative -Dquarkus.native.container-build=true -DskipTests
+
       - id: build
         uses: docker/build-push-action@v6
         with:
-          context: dotnet
+          context: java
+          file: java/src/main/docker/Dockerfile.native
           platforms: ${{ matrix.platform }}
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.platform }}

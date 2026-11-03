@@ -491,3 +491,6 @@ docker-compose.yaml
 *.sqlite
 *.sqlite3
 *.db
+# Generated OpenAPI client (java/pom.xml)
+java/src/main/webui/src/api/
+.quarkus/
