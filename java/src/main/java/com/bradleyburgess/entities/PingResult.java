@@ -10,8 +10,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-@Entity(name = "ping_result")
+@Entity(name = "pingResult")
+@Table(name = "ping_result")
+
 public class PingResult extends PanacheEntityBase {
     @Id
     @Column(name = "type")

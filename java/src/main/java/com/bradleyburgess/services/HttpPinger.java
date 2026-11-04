@@ -13,7 +13,7 @@ public class HttpPinger implements IPinger {
     public boolean ping() {
         try {
             int status = client.ping().getStatus();
-            return status >= 200 && status < 300;
+            return (status >= 200 && status < 300) || status == 405;
         } catch (Exception e) {
             return false;
         }

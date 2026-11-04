@@ -15,8 +15,6 @@ import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class PingerProducer {
-    @Inject
-    PingConfig pingConfig;
 
     @Produces
     @ApplicationScoped

@@ -1,9 +1,8 @@
 package com.bradleyburgess.rest;
 
-import java.util.List;
-
 import com.bradleyburgess.config.PingConfig;
 import com.bradleyburgess.dtos.CurrentStatusDto;
+import com.bradleyburgess.dtos.OutageDto;
 import com.bradleyburgess.dtos.UptimeDto;
 import com.bradleyburgess.dtos.VersionDto;
 import com.bradleyburgess.entities.Outage;
@@ -33,22 +32,19 @@ public class Resources {
     @GET
     @Path("current-status")
     public UptimeDto getCurrentStatus() {
-        List<Outage> outages = Outage.getMostRecent();
-        List<PingResult> pingResults = PingResult.listAll();
+        var outages = Outage.getMostRecent().stream()
+                .map(OutageDto::from)
+                .toList();
 
-        var systemStatus = !outages.isEmpty() && outages.getFirst().endDate == null
+        var systemStatus = Outage.findCurrentOngoing().isPresent()
                 ? SystemStatus.OFFLINE
                 : SystemStatus.ONLINE;
 
-        var lastSuccessfulPing = pingResults.stream()
-                .filter(p -> p.type == PingResultType.MostRecentSuccess)
-                .findFirst()
-                .orElse(null);
-
-        var currentStatusDto = new CurrentStatusDto(
+        var lastSuccess = PingResult.findByType(PingResultType.MostRecentSuccess);
+        var currentStatus = new CurrentStatusDto(
                 systemStatus,
-                lastSuccessfulPing == null ? null : lastSuccessfulPing.lastDate,
+                lastSuccess == null ? null : lastSuccess.lastDate,
                 pingConfig.host());
-        return new UptimeDto(outages, currentStatusDto);
+        return new UptimeDto(outages, currentStatus);
     }
 }

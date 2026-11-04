@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { formatDate } from '@/utils/stringUtils'
-import type { Outage } from '@/api'
+import type { OutageDto } from '@/api'
 
 import { defineProps } from 'vue'
-import { calculateDuration } from '@/utils/dateUtils'
+import { formatDuration } from '@/utils/dateUtils'
 
 const { tableData } = defineProps<{
-  tableData: Outage[]
+  tableData: OutageDto[]
 }>()
 </script>
 
@@ -14,7 +14,9 @@ const { tableData } = defineProps<{
   <div class="w-full overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left text-sm text-stone-300">
-        <thead class="border-b border-stone-700 text-sm font-semibold tracking-wider text-stone-100">
+        <thead
+          class="border-b border-stone-700 text-sm font-semibold tracking-wider text-stone-100"
+        >
           <tr>
             <th scope="col" class="px-4 py-3">Start Time</th>
             <th scope="col" class="px-4 py-3">End Time</th>
@@ -37,7 +39,7 @@ const { tableData } = defineProps<{
               <span
                 class="inline-flex items-center rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-500 ring-1 ring-inset ring-amber-500/30"
               >
-                {{ calculateDuration(row.startDate!, row.endDate) }}
+                {{ formatDuration(row.duration) }}
               </span>
             </td>
           </tr>

@@ -9,6 +9,7 @@ import com.bradleyburgess.entities.PingResult;
 import com.bradleyburgess.enums.PingResultType;
 import com.bradleyburgess.interfaces.IPinger;
 
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,22 +23,24 @@ public class BackgroundPingWorker {
     @Inject
     PingConfig pingConfig;
 
-    @Scheduled(every = "{ping.interval-seconds}")
-    @Transactional
+    @Scheduled(every = "{ping.interval-seconds}", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     public void periodicPing() {
-        var pingResult = pinger.ping();
-        var previousSuccessTime = updatePingResults(pingResult);
-        updateOutages(pingResult, previousSuccessTime);
+        var up = pinger.ping();
+        var now = Instant.now();
+        QuarkusTransaction.requiringNew().run(() -> record(up, now));
     }
 
-    private Instant updatePingResults(boolean pingWasSuccess) {
+    private void record(boolean up, Instant now) {
+        var previousSuccessTime = updatePingResults(up, now);
+        updateOutages(up, now, previousSuccessTime);
+    }
+
+    private Instant updatePingResults(boolean up, Instant now) {
         PingResult mostRecentPing = PingResult.findByType(PingResultType.MostRecent);
         PingResult mostRecentSuccessPing = PingResult.findByType(PingResultType.MostRecentSuccess);
         Instant previousSuccessTime = mostRecentSuccessPing.lastDate;
-        var now = Instant.now();
         mostRecentPing.lastDate = now;
-        if (pingWasSuccess) {
-
+        if (up) {
             mostRecentPing.success = true;
             mostRecentSuccessPing.success = true;
             mostRecentSuccessPing.lastDate = now;
@@ -47,24 +50,28 @@ public class BackgroundPingWorker {
         return previousSuccessTime;
     }
 
-    private void updateOutages(boolean wasPingSuccess, Instant lastSuccessTime) {
+    private void updateOutages(boolean up, Instant now, Instant lastSuccessTime) {
         var currentOutage = Outage.findCurrentOngoing();
-        var now = Instant.now();
-        if (wasPingSuccess) {
+        if (up) {
             if (currentOutage.isPresent()) {
-                currentOutage.get().endDate = Instant.now();
-            } else if (lastSuccessTime != null
-                    && lastSuccessTime.plus(Duration.ofSeconds(pingConfig.thresholdSeconds())).isBefore(now)) {
+                currentOutage.get().endDate = now;
+            } else if (isPastThreshold(lastSuccessTime, now)) {
                 var newOutage = new Outage();
                 newOutage.startDate = lastSuccessTime;
+                newOutage.endDate = now;
                 newOutage.persist();
             }
-        } else {
-            if (currentOutage.isEmpty()) {
-                var newOutage = new Outage();
-                newOutage.startDate = Instant.now();
-                newOutage.persist();
-            }
+        } else if (currentOutage.isEmpty() && isPastThreshold(lastSuccessTime, now)) {
+            var newOutage = new Outage();
+            newOutage.startDate = now;
+            newOutage.persist();
         }
+    }
+
+    private boolean isPastThreshold(Instant lastSuccessTime, Instant now) {
+        return lastSuccessTime != null
+                && lastSuccessTime
+                        .plus(Duration.ofSeconds(pingConfig.thresholdSeconds()))
+                        .isBefore(now);
     }
 }

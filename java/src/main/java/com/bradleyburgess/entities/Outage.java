@@ -10,8 +10,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity(name = "outage")
+@Table(name = "outage")
 public class Outage extends PanacheEntityBase {
     @Column(name = "id", nullable = false, columnDefinition = "INTEGER")
     @Id
@@ -28,9 +30,7 @@ public class Outage extends PanacheEntityBase {
         return Optional.ofNullable(find("endDate IS NULL").firstResult());
     }
 
-    public static List<Outage> getMostRecent(Integer limit) {
-        if (limit == null)
-            limit = 10;
+    public static List<Outage> getMostRecent(int limit) {
         return find("order by startDate desc").page(0, limit).list();
     }
 

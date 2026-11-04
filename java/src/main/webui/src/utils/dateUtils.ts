@@ -1,7 +1,7 @@
-export const calculateDuration = (startDate: Date, endDate?: Date): string => {
-  if (!endDate) return 'Ongoing'
-  const duration = endDate.getTime() - startDate.getTime()
-  const seconds = Math.floor(duration / 1000)
+export const formatDuration = (duration?: number | string): string => {
+  if (!duration) return 'Ongoing'
+  duration = Number.parseFloat(duration.toString())
+  const seconds = Math.floor(duration)
   const minutes = Math.floor(seconds / 60)
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
