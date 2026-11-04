@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.4
+
+- Various code quality improvements
+
 ## 0.5.3
 
 - Fix system status calculation when there are no outages
